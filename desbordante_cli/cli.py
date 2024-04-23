@@ -770,7 +770,7 @@ def algos_options() -> Callable:
 @click.option(f'--{TABLES_DIRECTORY}', type=(click.Path(exists=True, file_okay=False,
                dir_okay=True, resolve_path=True, allow_dash=False), str, bool))
 @algos_options()
-def desbordante_cli(**kwargs: Any) -> None:
+def cli(**kwargs: Any) -> None:
     """Takes in options from console as a dictionary, sets these options
     for the selected algo, runs algo and prints the result"""
 
@@ -806,4 +806,4 @@ def desbordante_cli(**kwargs: Any) -> None:
 
 
 if __name__ == '__main__':
-    desbordante_cli()
+    cli()
