@@ -5,6 +5,9 @@ description = "CLI interface for Desbordante platform"
 authors = ["Vadim Yakshigulov <toadharvard@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [
+    {include = "src"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -18,5 +21,4 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-desbordante = "desbordante_cli.cli:cli"
-
+desbordante = "src.cli:cli"
