@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "desbordante-cli"
+version = "1.0.0"
+description = "CLI interface for Desbordante platform"
+authors = ["Vadim Yakshigulov <toadharvard@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+desbordante = "2.0.0"
+click = "^8.1.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+desbordante = "desbordante_cli.cli:cli"
+
