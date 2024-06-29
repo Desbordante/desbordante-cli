@@ -11,7 +11,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.11"
-desbordante = "2.0.0"
+desbordante = "2.1.0"
 click = "^8.1.7"
 
 
@@ -21,4 +21,4 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-desbordante = "src.cli:cli"
+desbordante = "src.cli:desbordante_cli"
