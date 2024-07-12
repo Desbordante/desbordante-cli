@@ -19,6 +19,7 @@ class Task(StrEnum):
     od = auto()
     pfd = auto()
     ind = auto()
+    dd = auto()
     fd_verification = auto()
     afd_verification = auto()
     mfd_verification = auto()
@@ -45,6 +46,7 @@ class Algorithm(StrEnum):
     spider = auto()
     faida = auto()
     apriori = auto()
+    split = auto()
     naive_fd_verifier = auto()
     naive_afd_verifier = auto()
     icde09_mfd_verifier = auto()
@@ -124,11 +126,13 @@ Currently, the console version of Desbordante supports:
 4) Discovery of association rules
 5) Discovery of exact order dependencies (set-based and list-based axiomatization)
 6) Discovery of inclusion dependencies
-7) Verification of exact functional dependencies
-8) Verification of approximate functional dependencies
-9) Verification of metric dependencies
-10) Verification of exact unique column combinations
-11) Verification of approximate unique column combinations
+7) Discovery of differential dependencies
+8) Verification of exact functional dependencies
+9) Verification of approximate functional dependencies
+10) Verification of metric dependencies
+11) Verification of exact unique column combinations
+12) Verification of approximate unique column combinations
+
 If you need other types, you should look into the C++ code, the Python
 bindings or the Web version.
 
@@ -225,6 +229,15 @@ AR_HELP = '''Discover association rules. For more information, refer to
 
 Algorithms: Apriori
 Default: Apriori
+'''
+DD_HELP = '''Discover differential dependencies. Differential dependencies
+are defined in the "Differential Dependencies: Reasoning and Discovery"
+paper by S.Song and L.Chen. A more simple and useful definition can be
+found in the "Efficient Discovery of Differential Dependencies Through
+Association Rules Mining" paper by S.Kwashie et al.
+
+Algorithms: SPLIT
+Default: SPLIT
 '''
 FD_VERIFICATION_HELP = '''Verify whether a given exact functional dependency
 holds on the specified dataset. For more information about the primitive and
@@ -343,6 +356,36 @@ ORDER_HELP = '''Algorithm Order efficiently discovers all n-ary lexicographical
 order dependencies under the operator “<”. For more information, refer to the
 “Efficient order dependency detection” paper by Philipp Langer and Felix Naumann.
 '''
+SPLIT_HELP = '''The original algorithm for discovery of differential dependencies.
+For more information, refer to the "Differential Dependencies: Reasoning
+and Discovery" paper by S.Song and L.Chen.
+
+The algorithm accepts the following specific option:
+
+--difference_table=TABLE
+
+This option specifies the CSV table that contains difference limits
+for each column in the following format:
+
+Col1,Col2,Col3
+[0;1],[0;0],[2;3]
+[1;3],[0;4],-----
+[2;5],-----,-----
+
+These distance constraints define the search space. For example,
+the DD Col1 [1, 3] ; Col2 [0, 0] -> Col3 [2, 3] will be included in the search space.
+For more information about the search space refer to the paper stated above
+or to the example (examples/mining_dd.py).
+
+The default value for this option is the following table:
+
+Col1,Col2,Col3
+[0;0],[0;0],[0;0]
+[0;1],[0;1],[0;1]
+[0;2],[0;2],[0;2]
+[0;3],[0;3],[0;3]
+[0;4],[0;4],[0;4]
+'''
 FD_FIRST_HELP = '''FD-First algorithm belongs to the family of algorithms
 for discovering approximate conditional functional dependencies. For more
 information, refer to the “Revisiting Conditional Functional Dependency
@@ -393,7 +436,8 @@ OPTION_TYPES = {
     str: 'STRING',
     int: 'INTEGER',
     float: 'FLOAT',
-    bool: 'BOOLEAN'
+    bool: 'BOOLEAN',
+    desbordante.data_types.Table: 'TABLE'
 }
 
 TASK_HELP_PAGES = {
@@ -404,6 +448,7 @@ TASK_HELP_PAGES = {
     Task.pfd: PFD_HELP,
     Task.ind: IND_HELP,
     Task.ar: AR_HELP,
+    Task.dd: DD_HELP,
     Task.fd_verification: FD_VERIFICATION_HELP,
     Task.afd_verification: AFD_VERIFICATION_HELP,
     Task.mfd_verification: MFD_VERIFICATION_HELP,
@@ -429,6 +474,7 @@ ALGO_HELP_PAGES = {
     Algorithm.spider: SPIDER_HELP,
     Algorithm.faida: FAIDA_HELP,
     Algorithm.fd_first: FD_FIRST_HELP,
+    Algorithm.split: SPLIT_HELP,
     Algorithm.naive_fd_verifier: NAIVE_FD_VERIFIER_HELP,
     Algorithm.naive_afd_verifier: NAIVE_AFD_VERIFIER_HELP,
     Algorithm.icde09_mfd_verifier: ICDE09_MFD_VERIFIER_HELP,
@@ -459,6 +505,8 @@ TASK_INFO = {
                        Algorithm.spider),
     Task.ar: TaskInfo([Algorithm.apriori],
                       Algorithm.apriori),
+    Task.dd: TaskInfo([Algorithm.split],
+                      Algorithm.split),
     Task.fd_verification: TaskInfo([Algorithm.naive_fd_verifier],
                                    Algorithm.naive_fd_verifier),
     Task.afd_verification: TaskInfo([Algorithm.naive_afd_verifier],
@@ -490,6 +538,7 @@ ALGOS = {
     Algorithm.spider: desbordante.ind.algorithms.Spider,
     Algorithm.faida: desbordante.ind.algorithms.Faida,
     Algorithm.fd_first: desbordante.cfd.algorithms.FDFirst,
+    Algorithm.split: desbordante.dd.algorithms.Split,
     Algorithm.naive_fd_verifier: desbordante.fd_verification.algorithms.FDVerifier,
     Algorithm.naive_afd_verifier: desbordante.afd_verification.algorithms.FDVerifier,
     Algorithm.icde09_mfd_verifier: desbordante.mfd_verification.algorithms.MetricVerifier,
@@ -640,6 +689,8 @@ def get_algo_result(algo: desbordante.Algorithm, algo_name: str) -> Any:
                 result = algo.get_cfds()
             case Algorithm.apriori:
                 result = algo.get_ars()
+            case Algorithm.split:
+                result = algo.get_dds()
             case _:
                 assert False, 'No matching get_result function.'
         return result
