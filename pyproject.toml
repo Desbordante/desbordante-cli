@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "desbordante-cli"
-version = "1.0.0"
+version = "1.0.1"
 description = "CLI interface for Desbordante platform"
-authors = ["Vadim Yakshigulov <toadharvard@gmail.com>"]
-license = "MIT"
+authors = ["Desbordante Team <chernishev@gmail.com>"]
+license = "AGPL-3.0-or-later"
 readme = "README.md"
 packages = [
     {include = "src"}
