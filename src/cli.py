@@ -20,6 +20,8 @@ class Task(StrEnum):
     pfd = auto()
     ind = auto()
     dd = auto()
+    ucc = auto()
+    aucc = auto()
     fd_verification = auto()
     afd_verification = auto()
     mfd_verification = auto()
@@ -48,6 +50,8 @@ class Algorithm(StrEnum):
     faida = auto()
     apriori = auto()
     split = auto()
+    hyucc = auto()
+    pyroucc = auto()
     naive_fd_verifier = auto()
     naive_afd_verifier = auto()
     icde09_mfd_verifier = auto()
@@ -129,12 +133,14 @@ Currently, the console version of Desbordante supports:
 5) Discovery of exact order dependencies (set-based and list-based axiomatization)
 6) Discovery of inclusion dependencies
 7) Discovery of differential dependencies
-8) Verification of exact functional dependencies
-9) Verification of approximate functional dependencies
-10) Verification of metric dependencies
-11) Verification of exact unique column combinations
-12) Verification of approximate unique column combinations
-13) Verification of numerical dependencies
+8) Discovery of exact unique column combinations
+9) Discovery of approximate unique column combinations
+10) Verification of exact functional dependencies
+11) Verification of approximate functional dependencies
+12) Verification of metric dependencies
+13) Verification of exact unique column combinations
+14) Verification of approximate unique column combinations
+15) Verification of numerical dependencies
 
 If you need other types, you should look into the C++ code, the Python
 bindings or the Web version.
@@ -241,6 +247,20 @@ Association Rules Mining" paper by S.Kwashie et al.
 
 Algorithms: SPLIT
 Default: SPLIT
+'''
+UCC_HELP = '''Discover exact unique column combinations. For more
+information, refer to "A Hybrid Approach for Efficient Unique Column
+Combination Discovery" by T. Papenbrock and F. Naumann
+
+Algorithms: HYUCC, PYROUCC
+Default: HYUCC
+'''
+AUCC_HELP = '''Discover approximate unique column combinations.
+For more information, refer to "Efficient Discovery of Approximate
+Dependencies" by S. Kruse and F. Naumann.
+
+Algorithms: PYROUCC
+Default: PYROUCC
 '''
 FD_VERIFICATION_HELP = '''Verify whether a given exact functional dependency
 holds on the specified dataset. For more information about the primitive and
@@ -401,6 +421,14 @@ information, refer to the “Revisiting Conditional Functional Dependency
 Discovery: Splitting the “C” from the “FD”” paper by J. Rammelaere 
 and F. Geerts.
 '''
+HYUCC_HELP = '''An algorithm to discover exact unique column combinations.
+For more information, refer to "A Hybrid Approach for Efficient Unique Column
+Combination Discovery" by T. Papenbrock and F. Naumann
+'''
+PYROUCC_HELP = '''An algorithm to discover exact and approximate unique
+column combinations. For more information, refer to "Efficient Discovery
+of Approximate Dependencies" by S. Kruse and F. Naumann.
+'''
 NAIVE_FD_VERIFIER_HELP = '''A straightforward partition-based algorithm for
 verifying whether a given exact functional dependency holds on the specified
 dataset. For more information, refer to Lemma 2.2 from “TANE: An Efficient
@@ -462,6 +490,8 @@ TASK_HELP_PAGES = {
     Task.ind: IND_HELP,
     Task.ar: AR_HELP,
     Task.dd: DD_HELP,
+    Task.ucc: UCC_HELP,
+    Task.aucc: AUCC_HELP,
     Task.fd_verification: FD_VERIFICATION_HELP,
     Task.afd_verification: AFD_VERIFICATION_HELP,
     Task.mfd_verification: MFD_VERIFICATION_HELP,
@@ -489,6 +519,8 @@ ALGO_HELP_PAGES = {
     Algorithm.faida: FAIDA_HELP,
     Algorithm.fd_first: FD_FIRST_HELP,
     Algorithm.split: SPLIT_HELP,
+    Algorithm.hyucc: HYUCC_HELP,
+    Algorithm.pyroucc: PYROUCC_HELP,
     Algorithm.naive_fd_verifier: NAIVE_FD_VERIFIER_HELP,
     Algorithm.naive_afd_verifier: NAIVE_AFD_VERIFIER_HELP,
     Algorithm.icde09_mfd_verifier: ICDE09_MFD_VERIFIER_HELP,
@@ -522,6 +554,10 @@ TASK_INFO = {
                       Algorithm.apriori),
     Task.dd: TaskInfo([Algorithm.split],
                       Algorithm.split),
+    Task.ucc: TaskInfo([Algorithm.hyucc, Algorithm.pyroucc],
+                       Algorithm.hyucc),
+    Task.aucc: TaskInfo([Algorithm.pyroucc],
+                        Algorithm.pyroucc),
     Task.fd_verification: TaskInfo([Algorithm.naive_fd_verifier],
                                    Algorithm.naive_fd_verifier),
     Task.afd_verification: TaskInfo([Algorithm.naive_afd_verifier],
@@ -556,6 +592,8 @@ ALGOS = {
     Algorithm.faida: desbordante.ind.algorithms.Faida,
     Algorithm.fd_first: desbordante.cfd.algorithms.FDFirst,
     Algorithm.split: desbordante.dd.algorithms.Split,
+    Algorithm.hyucc: desbordante.ucc.algorithms.HyUCC,
+    Algorithm.pyroucc: desbordante.ucc.algorithms.PyroUCC,
     Algorithm.naive_fd_verifier: desbordante.fd_verification.algorithms.FDVerifier,
     Algorithm.naive_afd_verifier: desbordante.afd_verification.algorithms.FDVerifier,
     Algorithm.icde09_mfd_verifier: desbordante.mfd_verification.algorithms.MetricVerifier,
@@ -711,6 +749,8 @@ def get_algo_result(algo: desbordante.Algorithm, algo_name: str) -> Any:
                 result = algo.get_dds()
             case Algorithm.naive_nd_verifier:
                 result = algo.nd_holds
+            case algo_name if algo_name in TASK_INFO[Task.ucc].algos:
+                result = algo.get_uccs()
             case _:
                 assert False, 'No matching get_result function.'
         return result
