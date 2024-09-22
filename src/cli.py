@@ -29,6 +29,7 @@ class Task(StrEnum):
     aucc_verification = auto()
     gfd_verification = auto()
     nd_verification = auto()
+    pfd_verification = auto()
 
 
 class Algorithm(StrEnum):
@@ -61,6 +62,7 @@ class Algorithm(StrEnum):
     gfd_verifier = auto()
     egfd_verifier = auto()
     naive_nd_verifier = auto()
+    naive_pfd_verifier = auto()
 
 
 HELP = 'help'
@@ -141,6 +143,7 @@ Currently, the console version of Desbordante supports:
 13) Verification of exact unique column combinations
 14) Verification of approximate unique column combinations
 15) Verification of numerical dependencies
+16) Verification of probabilistic functional dependencies
 
 If you need other types, you should look into the C++ code, the Python
 bindings or the Web version.
@@ -311,6 +314,13 @@ the algorithms, refer to "Efficient derivation of numerical dependencies" by P. 
 Algorithms: NAIVE_ND_VERIFIER
 Default: NAIVE_ND_VERIFIER
 '''
+PFD_VERIFICATION_HELP = '''Verify whether a given probabilistic functional dependency holds
+on the specified dataset. For more information, refer to “Functional Dependency 
+Generation and Applications in pay-as-you-go data integration systems” by 
+Daisy Zhe Wang et al.
+Algorithms: NAIVE_PFD_VERIFIER
+Default: NAIVE_PFD_VERIFIER
+'''
 PYRO_HELP = '''A modern algorithm for discovery of approximate functional
 dependencies. Approximate functional dependencies are defined in the
 “Efficient Discovery of Approximate Dependencies” paper by S.Kruse and
@@ -472,6 +482,11 @@ NAIVE_ND_VERIFIER_HELP = '''A straightforward algorithm for verifying whether
 a given numerical dependecy holds. For more information refer to "Efficient
 derivation of numerical dependencies" by P. Ciaccia et al.
 '''
+NAIVE_PFD_VERIFIER_HELP = '''A straightforward partition-based algorithm for
+verifying whether a given probabilistic functional dependency holds. For 
+more information, refer to “Functional Dependency Generation and Applications 
+in pay-as-you-go data integration systems” by Daisy Zhe Wang et al.
+'''
 
 OPTION_TYPES = {
     str: 'STRING',
@@ -499,6 +514,7 @@ TASK_HELP_PAGES = {
     Task.aucc_verification: AUCC_VERIFICATION_HELP,
     Task.gfd_verification: GFD_VERIFICATION_HELP,
     Task.nd_verification: ND_VERIFICATION_HELP,
+    Task.pfd_verification: PFD_VERIFICATION_HELP
 }
 
 ALGO_HELP_PAGES = {
@@ -531,6 +547,7 @@ ALGO_HELP_PAGES = {
     Algorithm.egfd_verifier: GFD_VERIFIER_HELP,
     Algorithm.apriori: APRIORI_HELP,
     Algorithm.naive_nd_verifier: NAIVE_ND_VERIFIER_HELP,
+    Algorithm.naive_pfd_verifier: NAIVE_PFD_VERIFIER_HELP
 }
 
 TaskInfo = namedtuple('TaskInfo', ['algos', 'default'])
@@ -572,6 +589,8 @@ TASK_INFO = {
                                     Algorithm.naive_gfd_verifier),
     Task.nd_verification: TaskInfo([Algorithm.naive_nd_verifier],
                                    Algorithm.naive_nd_verifier),
+    Task.pfd_verification: TaskInfo([Algorithm.naive_pfd_verifier],
+                                   Algorithm.naive_pfd_verifier),
 }
 
 ALGOS = {
@@ -604,6 +623,7 @@ ALGOS = {
     Algorithm.egfd_verifier: desbordante.gfd_verification.algorithms.EGfdValid,
     Algorithm.apriori: desbordante.ar.algorithms.Apriori,
     Algorithm.naive_nd_verifier: desbordante.nd_verification.algorithms.NDVerifier,
+    Algorithm.naive_pfd_verifier: desbordante.pfd_verification.algorithms.PFDVerifier
 }
 
 
@@ -645,7 +665,7 @@ def check_error_option_presence(task: str | None, error: str | None) -> None:
 
 
 def check_error_measure_option_presence(task: str | None, error_measure: str | None) -> None:
-    if task == Task.pfd and error_measure is None:
+    if task in (Task.pfd, Task.pfd_verification) and error_measure is None:
         click.echo(f"ERROR: Missing option '{ERROR_MEASURE}'.")
         sys.exit(1)
 
@@ -728,6 +748,14 @@ def get_algo_result(algo: desbordante.Algorithm, algo_name: str) -> Any:
                 else:
                     result = (f'Exact unique column combination does not hold, but '
                               f'instead approximate unique column combination '
+                              f'holds with error = {error}')
+            case Algorithm.naive_pfd_verifier:
+                error = algo.get_error()
+                if error == 0.0:
+                    result = 'Exact functional dependency holds'
+                else:
+                    result = (f'Exact functional dependency does not hold, but '
+                              f'instead probabilistic functional dependency '
                               f'holds with error = {error}')
             case Algorithm.icde09_mfd_verifier:
                 result = algo.mfd_holds()
