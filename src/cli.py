@@ -31,6 +31,7 @@ class Task(StrEnum):
     gfd_verification = auto()
     nd_verification = auto()
     pfd_verification = auto()
+    gfd_mining = auto()
 
 
 class Algorithm(StrEnum):
@@ -66,6 +67,7 @@ class Algorithm(StrEnum):
     egfd_verifier = auto()
     naive_nd_verifier = auto()
     naive_pfd_verifier = auto()
+    gfd_miner = auto()
 
 
 HELP = 'help'
@@ -332,6 +334,10 @@ Daisy Zhe Wang et al.
 Algorithms: NAIVE_PFD_VERIFIER
 Default: NAIVE_PFD_VERIFIER
 '''
+GFD_MINING_HELP = '''Discover graph functional dependencies in graph structures.
+For more information about the primitive and the algorithms, refer to
+“Discovering Graph Functional Dependencies” by Fan Wenfei et al.
+'''
 PYRO_HELP = '''A modern algorithm for discovery of approximate functional
 dependencies. Approximate functional dependencies are defined in the
 “Efficient Discovery of Approximate Dependencies” paper by S.Kruse and
@@ -513,6 +519,7 @@ verifying whether a given probabilistic functional dependency holds. For
 more information, refer to “Functional Dependency Generation and Applications 
 in pay-as-you-go data integration systems” by Daisy Zhe Wang et al.
 '''
+GFD_MINER_HELP = '''An algorithm for searching for dependencies in a given graph'''
 
 OPTION_TYPES = {
     str: 'STRING',
@@ -541,7 +548,8 @@ TASK_HELP_PAGES = {
     Task.aucc_verification: AUCC_VERIFICATION_HELP,
     Task.gfd_verification: GFD_VERIFICATION_HELP,
     Task.nd_verification: ND_VERIFICATION_HELP,
-    Task.pfd_verification: PFD_VERIFICATION_HELP
+    Task.pfd_verification: PFD_VERIFICATION_HELP,
+    Task.gfd_mining: GFD_MINING_HELP,
 }
 
 ALGO_HELP_PAGES = {
@@ -576,7 +584,8 @@ ALGO_HELP_PAGES = {
     Algorithm.egfd_verifier: GFD_VERIFIER_HELP,
     Algorithm.apriori: APRIORI_HELP,
     Algorithm.naive_nd_verifier: NAIVE_ND_VERIFIER_HELP,
-    Algorithm.naive_pfd_verifier: NAIVE_PFD_VERIFIER_HELP
+    Algorithm.naive_pfd_verifier: NAIVE_PFD_VERIFIER_HELP,
+    Algorithm.gfd_miner: GFD_MINER_HELP,
 }
 
 TaskInfo = namedtuple('TaskInfo', ['algos', 'default'])
@@ -621,6 +630,8 @@ TASK_INFO = {
                                    Algorithm.naive_nd_verifier),
     Task.pfd_verification: TaskInfo([Algorithm.naive_pfd_verifier],
                                    Algorithm.naive_pfd_verifier),
+    Task.gfd_mining: TaskInfo([Algorithm.gfd_miner],
+                              Algorithm.gfd_miner),
 }
 
 ALGOS = {
@@ -655,7 +666,8 @@ ALGOS = {
     Algorithm.egfd_verifier: desbordante.gfd_verification.algorithms.EGfdValid,
     Algorithm.apriori: desbordante.ar.algorithms.Apriori,
     Algorithm.naive_nd_verifier: desbordante.nd_verification.algorithms.NDVerifier,
-    Algorithm.naive_pfd_verifier: desbordante.pfd_verification.algorithms.PFDVerifier
+    Algorithm.naive_pfd_verifier: desbordante.pfd_verification.algorithms.PFDVerifier,
+    Algorithm.gfd_miner: desbordante.gfd_mining.algorithms.GfdMiner,
 }
 
 
@@ -803,7 +815,7 @@ def get_algo_result(algo: desbordante.Algorithm, algo_name: str, provided_option
                 result = algo.get_list_ods()
             case algo_name if algo_name in TASK_INFO[Task.ind].algos:
                 result = algo.get_inds()
-            case algo_name if algo_name in TASK_INFO[Task.gfd_verification].algos:
+            case algo_name if algo_name in TASK_INFO[Task.gfd_verification].algos or algo_name in TASK_INFO[Task.gfd_mining]:
                 result = algo.get_gfds()
             case Algorithm.fd_first:
                 result = algo.get_cfds()
