@@ -16,6 +16,7 @@ class Task(StrEnum):
     cfd = auto()
     ar = auto()
     afd = auto()
+    sfd = auto()
     od = auto()
     pfd = auto()
     ind = auto()
@@ -36,6 +37,7 @@ class Algorithm(StrEnum):
     tane = auto()
     pfdtane = auto()
     hyfd = auto()
+    cords = auto()
     fd_mine = auto()
     dfd = auto()
     dep_miner = auto()
@@ -197,6 +199,13 @@ F. Naumann.
 Algorithms: PYRO, TANE
 Default: PYRO
 '''
+SFD_HELP = '''Discover soft functional dependencies and correlations (if only_sfd option set to False). 
+Both are defined in the "CORDS: Automatic Discovery of Correlations and Soft 
+Functional Dependencies" paper by Ihab F. Ilyas et al.
+
+Algorithms: CORDS
+Default: CORDS
+'''
 OD_HELP = '''Discover order dependencies. For more information about the 
 primitive and algorithms, refer to the “Effective and complete discovery 
 of order dependencies via set-based axiomatization” paper by J. Szlichta 
@@ -321,11 +330,21 @@ TANE_HELP = '''A classic algorithm for discovery of exact and approximate
 functional dependencies. For more information, refer to “TANE : An Efficient
 Algorithm for Discovering Functional and Approximate Dependencies” by
 Y. Huntala et al.
+
+Besides mining afd's with error measure g1 as intended in the original paper
+we provide a possibility to use measures pdep, tau, mu_plus, rho. For more information on the
+meausures refer to "Measuring Approximate Functional Dependencies: A Comparative Study"
+by M. Parciak et al.
 '''
 PFDTANE_HELP = '''A TANE-based algorithm for discovery of probabilistic
 functional dependencies. For more information, refer to “Functional Dependency
 Generation and Applications in pay-as-you-go data integration systems” by
 Daisy Zhe Wang et al.
+'''
+CORDS_HELP = '''An algorithm for discovery of correlations and soft
+functional dependencies. For more information, refer to 
+"CORDS: Automatic Discovery of Correlations and Soft Functional Dependencies" 
+paper by Ihab F. Ilyas et al.
 '''
 HYFD_HELP = '''A modern algorithm for discovery of exact functional
 dependencies. One of the most high-performance algorithms for this task. For
@@ -486,6 +505,7 @@ TASK_HELP_PAGES = {
     Task.fd: FD_HELP,
     Task.cfd: CFD_HELP,
     Task.afd: AFD_HELP,
+    Task.sfd: SFD_HELP,
     Task.od: OD_HELP,
     Task.pfd: PFD_HELP,
     Task.ind: IND_HELP,
@@ -506,6 +526,7 @@ ALGO_HELP_PAGES = {
     Algorithm.pyro: PYRO_HELP,
     Algorithm.tane: TANE_HELP,
     Algorithm.pfdtane: PFDTANE_HELP,
+    Algorithm.cords: CORDS_HELP,
     Algorithm.hyfd: HYFD_HELP,
     Algorithm.fd_mine: FD_MINE_HELP,
     Algorithm.dfd: DFD_HELP,
@@ -546,6 +567,7 @@ TASK_INFO = {
                        Algorithm.fd_first),
     Task.afd: TaskInfo([Algorithm.pyro, Algorithm.tane],
                        Algorithm.pyro),
+    Task.sfd: TaskInfo([Algorithm.cords],Algorithm.cords), 
     Task.od: TaskInfo([Algorithm.fastod, Algorithm.order],
                       Algorithm.fastod),
     Task.pfd: TaskInfo([Algorithm.pfdtane], Algorithm.pfdtane),
@@ -579,6 +601,7 @@ ALGOS = {
     Algorithm.pyro: desbordante.fd.algorithms.Pyro,
     Algorithm.tane: desbordante.fd.algorithms.Tane,
     Algorithm.pfdtane: desbordante.pfd.algorithms.PFDTane,
+    Algorithm.cords: desbordante.sfd.algorithms.SFDAlgorithm,
     Algorithm.hyfd: desbordante.fd.algorithms.HyFD,
     Algorithm.fd_mine: desbordante.fd.algorithms.FdMine,
     Algorithm.dfd: desbordante.fd.algorithms.DFD,
@@ -706,7 +729,7 @@ def set_algo_options(algo: desbordante.Algorithm, args: dict[str, Any]) -> set:
     return used_options
 
 
-def get_algo_result(algo: desbordante.Algorithm, algo_name: str) -> Any:
+def get_algo_result(algo: desbordante.Algorithm, algo_name: str, provided_options: dict) -> Any:
     try:
         algo.execute()
         match algo_name:
@@ -734,6 +757,10 @@ def get_algo_result(algo: desbordante.Algorithm, algo_name: str) -> Any:
                 result = algo.mfd_holds()
             case algo_name if algo_name in TASK_INFO[Task.fd].algos:
                 result = algo.get_fds()
+            case Algorithm.cords:
+                SFDs = 'SFDs:\n' + '\n'.join(map(str,algo.get_fds()))
+                corrs = '\n\nCorrelations:\n' +'\n'.join(map(str,algo.get_correlations()))
+                result =  SFDs + corrs if not provided_options['only_sfd'] else SFDs
             case Algorithm.fastod:
                 result = algo.get_asc_ods() + algo.get_desc_ods() + algo.get_simple_ods()
             case Algorithm.order:
@@ -904,7 +931,6 @@ def algos_options() -> Callable:
 def desbordante_cli(**kwargs: Any) -> None:
     """Takes in options from console as a dictionary, sets these options
     for the selected algo, runs algo and prints the result"""
-
     curr_task = kwargs[TASK]
     curr_algo_name = kwargs[ALGO]
     curr_algo = ALGOS[curr_algo_name]()
@@ -925,7 +951,7 @@ def desbordante_cli(**kwargs: Any) -> None:
     used_opts |= set_algo_options(curr_algo, opts)
     provided_options = get_provided_options(kwargs)
     print_unused_opts(used_opts, set(provided_options.keys()))
-    result = get_algo_result(curr_algo, curr_algo_name)
+    result = get_algo_result(curr_algo, curr_algo_name, provided_options)
     end_point = process_time()
 
     if verbose:
