@@ -70,7 +70,7 @@ ALGORITHM = 'algorithm'
 FILENAME = 'filename'
 VERBOSE = 'verbose'
 ERROR = 'error'
-ERROR_MEASURE = 'error_measure'
+PFD_ERROR_MEASURE = 'pfd_error_measure'
 TABLES = 'tables'
 TABLES_LIST = 'tables_list'
 TABLES_DIRECTORY = 'tables_directory'
@@ -128,19 +128,20 @@ output file or to console, if none is specified.
 Currently, the console version of Desbordante supports:
 1) Discovery of exact functional dependencies
 2) Discovery of approximate functional dependencies
-3) Discovery of probabilistic functional dependencies
-4) Discovery of association rules
-5) Discovery of exact order dependencies (set-based and list-based axiomatization)
-6) Discovery of inclusion dependencies
-7) Discovery of differential dependencies
-8) Discovery of exact unique column combinations
-9) Discovery of approximate unique column combinations
-10) Verification of exact functional dependencies
-11) Verification of approximate functional dependencies
-12) Verification of metric dependencies
-13) Verification of exact unique column combinations
-14) Verification of approximate unique column combinations
-15) Verification of numerical dependencies
+3) Discovery of soft functional dependencies
+4) Discovery of probabilistic functional dependencies
+5) Discovery of association rules
+6) Discovery of exact order dependencies (set-based and list-based axiomatization)
+7) Discovery of inclusion dependencies
+8) Discovery of differential dependencies
+9) Discovery of exact unique column combinations
+10) Discovery of approximate unique column combinations
+11) Verification of exact functional dependencies
+12) Verification of approximate functional dependencies
+13) Verification of metric dependencies
+14) Verification of exact unique column combinations
+15) Verification of approximate unique column combinations
+16) Verification of numerical dependencies
 
 If you need other types, you should look into the C++ code, the Python
 bindings or the Web version.
@@ -644,9 +645,9 @@ def check_error_option_presence(task: str | None, error: str | None) -> None:
         sys.exit(1)
 
 
-def check_error_measure_option_presence(task: str | None, error_measure: str | None) -> None:
+def check_pfd_error_measure_option_presence(task: str | None, error_measure: str | None) -> None:
     if task == Task.pfd and error_measure is None:
-        click.echo(f"ERROR: Missing option '{ERROR_MEASURE}'.")
+        click.echo(f"ERROR: Missing option '{PFD_ERROR_MEASURE}'.")
         sys.exit(1)
 
 
@@ -908,13 +909,13 @@ def desbordante_cli(**kwargs: Any) -> None:
     curr_algo_name = kwargs[ALGO]
     curr_algo = ALGOS[curr_algo_name]()
     error_opt = kwargs[ERROR]
-    error_measure_opt = kwargs[ERROR_MEASURE]
+    pfd_error_measure_opt = kwargs[PFD_ERROR_MEASURE]
     verbose = kwargs[VERBOSE]
     filename = kwargs[FILENAME]
 
     check_mismatch(curr_algo_name, curr_task)
     check_error_option_presence(curr_task, error_opt)
-    check_error_measure_option_presence(curr_task, error_measure_opt)
+    check_pfd_error_measure_option_presence(curr_task, pfd_error_measure_opt)
 
     opts = process_tables_options(kwargs, curr_algo_name)
 
