@@ -263,8 +263,8 @@ UCC_HELP = '''Discover exact unique column combinations. For more
 information, refer to "A Hybrid Approach for Efficient Unique Column
 Combination Discovery" by T. Papenbrock and F. Naumann
 
-Algorithms: HYUCC, PYROUCC, HPIVALID
-Default: HYUCC
+Algorithms: HPIVALID, PYROUCC, HYUCC
+Default: HPIVALID
 '''
 AUCC_HELP = '''Discover approximate unique column combinations.
 For more information, refer to "Efficient Discovery of Approximate
@@ -585,7 +585,7 @@ TASK_INFO = {
     Task.dd: TaskInfo([Algorithm.split],
                       Algorithm.split),
     Task.ucc: TaskInfo([Algorithm.hpivalid, Algorithm.hyucc, Algorithm.pyroucc],
-                       Algorithm.hyucc),
+                       Algorithm.hpivalid),
     Task.aucc: TaskInfo([Algorithm.pyroucc],
                         Algorithm.pyroucc),
     Task.fd_verification: TaskInfo([Algorithm.naive_fd_verifier],
