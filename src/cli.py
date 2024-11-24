@@ -52,6 +52,7 @@ class Algorithm(StrEnum):
     faida = auto()
     apriori = auto()
     split = auto()
+    hpivalid = auto()
     hyucc = auto()
     pyroucc = auto()
     naive_fd_verifier = auto()
@@ -262,7 +263,7 @@ UCC_HELP = '''Discover exact unique column combinations. For more
 information, refer to "A Hybrid Approach for Efficient Unique Column
 Combination Discovery" by T. Papenbrock and F. Naumann
 
-Algorithms: HYUCC, PYROUCC
+Algorithms: HYUCC, PYROUCC, HPIVALID
 Default: HYUCC
 '''
 AUCC_HELP = '''Discover approximate unique column combinations.
@@ -441,6 +442,11 @@ information, refer to the “Revisiting Conditional Functional Dependency
 Discovery: Splitting the “C” from the “FD”” paper by J. Rammelaere 
 and F. Geerts.
 '''
+HPIVALID_HELP = '''An algorithm to discover unique column combinations based on
+hitting set enumeration and validation. For more information, refer
+to "Hitting Set Enumeration with Partial Information for Unique Column
+Combination Discovery" by J. Birnick et. al.
+'''
 HYUCC_HELP = '''An algorithm to discover exact unique column combinations.
 For more information, refer to "A Hybrid Approach for Efficient Unique Column
 Combination Discovery" by T. Papenbrock and F. Naumann
@@ -541,6 +547,7 @@ ALGO_HELP_PAGES = {
     Algorithm.faida: FAIDA_HELP,
     Algorithm.fd_first: FD_FIRST_HELP,
     Algorithm.split: SPLIT_HELP,
+    Algorithm.hpivalid: HPIVALID_HELP,
     Algorithm.hyucc: HYUCC_HELP,
     Algorithm.pyroucc: PYROUCC_HELP,
     Algorithm.naive_fd_verifier: NAIVE_FD_VERIFIER_HELP,
@@ -577,7 +584,7 @@ TASK_INFO = {
                       Algorithm.apriori),
     Task.dd: TaskInfo([Algorithm.split],
                       Algorithm.split),
-    Task.ucc: TaskInfo([Algorithm.hyucc, Algorithm.pyroucc],
+    Task.ucc: TaskInfo([Algorithm.hpivalid, Algorithm.hyucc, Algorithm.pyroucc],
                        Algorithm.hyucc),
     Task.aucc: TaskInfo([Algorithm.pyroucc],
                         Algorithm.pyroucc),
@@ -616,6 +623,7 @@ ALGOS = {
     Algorithm.faida: desbordante.ind.algorithms.Faida,
     Algorithm.fd_first: desbordante.cfd.algorithms.FDFirst,
     Algorithm.split: desbordante.dd.algorithms.Split,
+    Algorithm.hpivalid: desbordante.ucc.algorithms.HPIValid,
     Algorithm.hyucc: desbordante.ucc.algorithms.HyUCC,
     Algorithm.pyroucc: desbordante.ucc.algorithms.PyroUCC,
     Algorithm.naive_fd_verifier: desbordante.fd_verification.algorithms.FDVerifier,
