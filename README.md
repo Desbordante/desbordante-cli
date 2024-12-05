@@ -31,10 +31,16 @@ The **Discovery** task is designed to identify all instances of a specified patt
 The **Validation** task is different: it is designed to check whether a specified pattern *instance* is present in a given dataset. This task not only returns True or False, but it also explains why the instance does not hold (e.g. it can list table rows with conflicting values).
 
 The currently supported data patterns are:
-* Functional dependency variants:
-    - Exact functional dependencies (discovery and validation)
-    - Approximate functional dependencies, with g<sub>1</sub> metric (discovery and validation)
-    - Probabilistic functional dependencies, with PerTuple and PerValue metrics (discovery)
+* Exact functional dependencies (discovery and validation)
+* Approximate functional dependencies, with 
+    - $g_1$ metric — classic AFDs (discovery and validation)
+    - $\mu+$ metric (discovery)
+    - $\tau$ metric (discovery)
+    - $pdep$ metric (discovery)
+    - $\rho$ metric (discovery)
+* Probabilistic functional dependencies, with PerTuple and PerValue metrics (discovery and validation)
+* Classic soft functional dependencies (with corellations), with $\rho$ metric (discovery and validation)
+* Numerical dependencies (validation)
 * Graph functional dependencies (validation)
 * Conditional functional dependencies (discovery)
 * Inclusion dependencies (discovery)
@@ -43,9 +49,10 @@ The currently supported data patterns are:
    - list-based axiomatization (discovery)
 * Metric functional dependencies (validation)
 * Fuzzy algebraic constraints (discovery)
+* Differential Dependencies (discovery)
 * Unique column combinations:
    - Exact unique column combination (discovery and validation)
-   - Approximate unique column combination, with g<sub>1</sub> metric (discovery and validation)
+   - Approximate unique column combination, with $g_1$ metric (discovery and validation)
 * Association rules (discovery)
 
 For more information about the supported patterns check the main [repo](https://github.com/Desbordante/desbordante-core).
