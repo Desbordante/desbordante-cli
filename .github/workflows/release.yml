@@ -9,8 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.11, 3.12]
-        poetry-version: [1.8.2]
+        python-version: ['3.11']
+        poetry-version: ['1.8.2']
         os: [ubuntu-latest]
     environment:
       name: pypi
