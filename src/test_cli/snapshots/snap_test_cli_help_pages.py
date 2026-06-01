@@ -128,6 +128,24 @@ refer to “Functional Dependencies for Graphs” by Wenfei Fan et al.
 
 '''
 
+snapshots['test_algos_help_pages[eulerfd] eulerfd'] = '''A modern algorithm for discovery of exact functional
+dependencies. Like AID, it is approximate, i.e. it can miss some
+dependencies or produce non-valid ones, but is significantly faster than
+exact algorithms. For more information, refer to the “EulerFD: An Efficient
+Double-Cycle Approximation of Functional Dependencies” paper by Qiongqiong Lin,
+Yunfan Gu, Jingyan Sa et al.
+
+--custom_random_seed=INTEGER
+\tseed for the custom random generator. Used for consistency of results across platforms.
+
+--is_null_equal_null=BOOLEAN
+\tspecify whether two NULLs should be considered equal
+
+--max_lhs=INTEGER
+\tmax considered LHS size
+
+'''
+
 snapshots['test_algos_help_pages[faida] faida'] = '''Both unary and n-ary inclusion dependency mining algorithm.
 Unlike all other algorithms, it is approximate, i.e. it can
 miss some dependencies or produce non-valid ones. In exchange,
@@ -794,7 +812,7 @@ more information about the primitive and the algorithms, refer to the
 “Functional dependency discovery: an experimental evaluation of seven
 algorithms” paper by T. Papenbrock et al.
 
-Algorithms: PYRO, TANE, HYFD, FD_MINE, DFD, DEP_MINER, FDEP, FUN, FASTFDS, AID
+Algorithms: PYRO, TANE, HYFD, FD_MINE, DFD, DEP_MINER, FDEP, FUN, FASTFDS, AID, EULERFD
 Default: HYFD
 
 '''
