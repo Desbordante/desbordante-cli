@@ -6,9 +6,12 @@ from enum import StrEnum, auto
 from time import process_time
 from typing import Any, Callable
 from os import scandir
+from dataclasses import dataclass, field
 
 import click
 import desbordante
+
+from options.domain_pac_options import register_pac_domain_option, process_pac_domain_options
 
 
 class Task(StrEnum):
@@ -31,6 +34,7 @@ class Task(StrEnum):
     gfd_verification = auto()
     nd_verification = auto()
     pfd_verification = auto()
+    pac_verification = auto()
 
 
 class Algorithm(StrEnum):
@@ -67,6 +71,7 @@ class Algorithm(StrEnum):
     egfd_verifier = auto()
     naive_nd_verifier = auto()
     naive_pfd_verifier = auto()
+    domain_pac_verifier = auto()
 
 
 HELP = 'help'
@@ -150,6 +155,7 @@ Currently, the console version of Desbordante supports:
 15) Verification of approximate unique column combinations
 16) Verification of numerical dependencies
 17) Verification of probabilistic functional dependencies
+18) Verification of probabilistic approximate constraints
 
 If you need other types, you should look into the C++ code, the Python
 bindings or the Web version.
@@ -330,6 +336,12 @@ Generation and Applications in pay-as-you-go data integration systems” by
 Daisy Zhe Wang et al.
 Algorithms: NAIVE_PFD_VERIFIER
 Default: NAIVE_PFD_VERIFIER
+'''
+PAC_VERIFICATION_HELP = '''Verify whether a given probabilistic approximate constraint holds on a
+specified dataset. For more information, refer to "Checks and Balances: Monitoring Data Quality
+Problems in Network Traffic Databases" by Flip Korn, S. Muthukrishnan and Yunyue Zhu.
+Algorithms: DOMAIN_PAC_VERIFIER
+Default: DOMAIN_PAC_VERIFIER
 '''
 PYRO_HELP = '''A modern algorithm for discovery of approximate functional
 dependencies. Approximate functional dependencies are defined in the
@@ -519,13 +531,19 @@ verifying whether a given probabilistic functional dependency holds. For
 more information, refer to “Functional Dependency Generation and Applications 
 in pay-as-you-go data integration systems” by Daisy Zhe Wang et al.
 '''
+DOMAIN_PAC_VERIFIER_HELP = '''An algorithm for verifying whether a given domain probabilistic
+approximate constraint holds, based on elbow method. For more information, refer to "Checks and
+Balances: Monitoring Data Quality Problems in Network Traffic Databases by Flip Korn,
+S. Muthukrishnan and Yunyue Zhu.
+'''
 
 OPTION_TYPES = {
     str: 'STRING',
     int: 'INTEGER',
     float: 'FLOAT',
     bool: 'BOOLEAN',
-    desbordante.data_types.Table: 'TABLE'
+    desbordante.data_types.Table: 'TABLE',
+    desbordante.pac.domains.IDomain: 'DOMAIN',
 }
 
 TASK_HELP_PAGES = {
@@ -547,7 +565,8 @@ TASK_HELP_PAGES = {
     Task.aucc_verification: AUCC_VERIFICATION_HELP,
     Task.gfd_verification: GFD_VERIFICATION_HELP,
     Task.nd_verification: ND_VERIFICATION_HELP,
-    Task.pfd_verification: PFD_VERIFICATION_HELP
+    Task.pfd_verification: PFD_VERIFICATION_HELP,
+    Task.pac_verification: PAC_VERIFICATION_HELP,
 }
 
 ALGO_HELP_PAGES = {
@@ -583,7 +602,8 @@ ALGO_HELP_PAGES = {
     Algorithm.egfd_verifier: GFD_VERIFIER_HELP,
     Algorithm.apriori: APRIORI_HELP,
     Algorithm.naive_nd_verifier: NAIVE_ND_VERIFIER_HELP,
-    Algorithm.naive_pfd_verifier: NAIVE_PFD_VERIFIER_HELP
+    Algorithm.naive_pfd_verifier: NAIVE_PFD_VERIFIER_HELP,
+    Algorithm.domain_pac_verifier: DOMAIN_PAC_VERIFIER_HELP,
 }
 
 TaskInfo = namedtuple('TaskInfo', ['algos', 'default'])
@@ -628,6 +648,7 @@ TASK_INFO = {
                                    Algorithm.naive_nd_verifier),
     Task.pfd_verification: TaskInfo([Algorithm.naive_pfd_verifier],
                                    Algorithm.naive_pfd_verifier),
+    Task.pac_verification: TaskInfo([Algorithm.domain_pac_verifier], Algorithm.domain_pac_verifier),
 }
 
 ALGOS = {
@@ -663,7 +684,8 @@ ALGOS = {
     Algorithm.egfd_verifier: desbordante.gfd_verification.algorithms.EGfdValid,
     Algorithm.apriori: desbordante.ar.algorithms.Apriori,
     Algorithm.naive_nd_verifier: desbordante.nd_verification.algorithms.NDVerifier,
-    Algorithm.naive_pfd_verifier: desbordante.pfd_verification.algorithms.PFDVerifier
+    Algorithm.naive_pfd_verifier: desbordante.pfd_verification.algorithms.PFDVerifier,
+    Algorithm.domain_pac_verifier: desbordante.pac_verification.algorithms.DomainPACVerifier,
 }
 
 
@@ -799,6 +821,8 @@ def get_algo_result(algo: desbordante.Algorithm, algo_name: str, provided_option
                               f'holds with error = {error}')
             case Algorithm.icde09_mfd_verifier:
                 result = algo.mfd_holds()
+            case algo_name if algo_name in TASK_INFO[Task.pac_verification].algos:
+                result = algo.get_pac()
             case algo_name if algo_name in TASK_INFO[Task.fd].algos:
                 result = algo.get_fds()
             case Algorithm.cords:
@@ -877,14 +901,65 @@ def print_help_page(algo_name: str | None, task: str | None) -> None:
         click.echo(PRIMARY_HELP)
 
 
+@dataclass
+class OptionInfo:
+    name: str = ''
+    help_type_name: str = ''
+    multiple: bool = False
+    description: str = ''
+
+
+@dataclass
+class OptionsReplacement:
+    # Do not show these options in help page
+    remove: list[str] = field(default_factory=list)
+    # Additional options to show in help page
+    extra_opts: list[OptionInfo] = field(default_factory=list)
+
+
+OPTIONS_REPLACEMENTS = {
+        Algorithm.domain_pac_verifier: OptionsReplacement(
+            ['domain'],
+            [
+                OptionInfo(
+                    'domain-type', "'ball'|'parallelepiped'", False, 'One of built-in domain types'
+                ),
+                OptionInfo(
+                    'leveling-coefficients', OPTION_TYPES[float], True,
+                    '''Coefficients by which distances between individual coordinates are multiplied
+                    (for domains based on coordinate-wise metrics). Default is [1, 1, ..., 1].'''
+                ),
+                OptionInfo(
+                    'center', OPTION_TYPES[float], True, 'Center of the Ball domain'
+                ),
+                OptionInfo(
+                    'radius', OPTION_TYPES[float], False, 'Radius of the Ball domain'
+                ),
+                OptionInfo(
+                    'lower-bound', OPTION_TYPES[float], True,
+                    'Lower bound of the Parallelepiped domain'
+                ),
+                OptionInfo(
+                    'upper-bound', OPTION_TYPES[float], True,
+                    'Upper bound of the Parallelepiped domain'
+                ),
+            ]
+        ),
+    }
+
+
 def print_algo_help_page(algo_name: str) -> None:
     algo = ALGOS[Algorithm(algo_name)]()
     help_info = ''
     algo_options = list(algo.get_possible_options())
     algo_options.sort()
+    opt_replacements = OPTIONS_REPLACEMENTS.get(algo_name, OptionsReplacement())
     for opt in algo_options:
-        if opt not in (TABLE, TABLES):
-            help_info += get_option_help_info(opt, algo)
+        if opt not in (TABLE, TABLES) and opt not in opt_replacements.remove:
+            opt_info = get_option_help_info(opt, algo)
+            help_info += make_option_help_page(opt_info)
+    for opt_info in opt_replacements.extra_opts:
+        help_info += make_option_help_page(opt_info)
     click.echo(f'{ALGO_HELP_PAGES[Algorithm(algo_name)]}{help_info}')
 
 
@@ -893,17 +968,26 @@ def get_provided_options(all_option_dict: dict[str, Any]) -> dict[str, Any]:
             if not is_omitted(value)}
 
 
-def get_option_help_info(opt: str, algo: desbordante.Algorithm) -> str:
-    help_info = ''
+def get_option_help_info(opt: str, algo: desbordante.Algorithm) -> OptionInfo:
+    opt_info = OptionInfo()
+    opt_info.name = opt
     opt_main_type, *opt_additional_types = algo.get_option_type(opt)
     opt_help_type = opt_additional_types[0] if opt_main_type == list \
         else opt_main_type
+    opt_info.help_type_name = OPTION_TYPES[opt_help_type]
+    opt_info.multiple = opt_main_type == list
+    opt_info.description = algo.get_description(opt)
+    return opt_info
+
+
+def make_option_help_page(opt_info: OptionInfo) -> str:
+    help_info = ''
     help_info = (f'{help_info}\n'
-                 f'--{opt}={OPTION_TYPES[opt_help_type]}\n'
-                 f'\t{algo.get_description(opt)}\n')
-    if opt_main_type == list:
+                 f'--{opt_info.name}={opt_info.help_type_name}\n'
+                 f'\t{opt_info.description}\n')
+    if opt_info.multiple:
         help_info += (f'\tFor multiple values, specify multiple times '
-                      f'\n\t(e.g., --{opt}=1 --{opt}=2)\n')
+                      f'\n\t(e.g., --{opt_info.name}=1 --{opt_info.name}=2)\n')
     return help_info
 
 
@@ -933,6 +1017,13 @@ def process_tables_options(opts: dict[str, Any], algo_name: str) -> dict[str, An
     return result
 
 
+def process_algorithm_specific_options(opts: dict[str, Any], algo_name: str) -> dict[str, Any]:
+    """Process options specific to a concrete algorithm, that cannot be bound directly"""
+    if algo_name == Algorithm.domain_pac_verifier:
+        opts = process_pac_domain_options(opts)
+    return opts
+
+
 def algos_options() -> Callable:
     option_type_info = get_option_type_info()
 
@@ -949,6 +1040,8 @@ def algos_options() -> Callable:
                              type=opt_additional_types[0])(func)
             elif opt_main_type == desbordante.data_types.Table:
                 click.option(arg, type=(str, str, bool))(func)
+            elif opt_main_type == desbordante.pac.domains.IDomain:
+                register_pac_domain_option(func)
             else:
                 click.option(arg, type=opt_main_type)(func)
         return func
@@ -989,6 +1082,7 @@ def desbordante_cli(**kwargs: Any) -> None:
     check_error_option_presence(curr_task, error_opt)
     check_pfd_error_measure_option_presence(curr_task, pfd_error_measure_opt)
 
+    kwargs = process_algorithm_specific_options(kwargs, curr_algo_name)
     opts = process_tables_options(kwargs, curr_algo_name)
 
     start_point = process_time()
