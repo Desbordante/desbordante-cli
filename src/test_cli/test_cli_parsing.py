@@ -56,7 +56,7 @@ def get_expected_options(algo):
     expected_options = dict()
     for opt in algo_opts:
         if opt not in ALGORITHM_SPECIFIC_OPTS.keys():
-            opt_type = algo.get_option_type(opt)
+            opt_type = algo._get_option_type(opt)
             expected_options.update({opt: OPTION_VALUES[opt_type].value})
         elif opt not in DATA_OPTS:
             expected_options.update({opt: ALGORITHM_SPECIFIC_OPTS[opt].value})
@@ -69,7 +69,7 @@ def get_invoke_str(algo_name):
     algo_opts = [opt for opt in algo.get_possible_options() if opt not in SKIPPED_OPTS]
     for opt in algo_opts:
         if opt not in ALGORITHM_SPECIFIC_OPTS.keys():
-            opt_type = algo.get_option_type(opt)
+            opt_type = algo._get_option_type(opt)
             value_as_str = OPTION_VALUES[opt_type].str
         else:
             value_as_str = ALGORITHM_SPECIFIC_OPTS[opt].str

@@ -746,7 +746,7 @@ def is_omitted(value: Any) -> bool:
 def set_option(algo: desbordante.Algorithm, opt_name: str, opt_value: Any) \
         -> None:
     try:
-        algo.set_option(opt_name, opt_value)
+        algo._set_option(opt_name, opt_value)
     except Exception as exc:
         click.echo(exc)
         sys.exit(1)
@@ -754,7 +754,7 @@ def set_option(algo: desbordante.Algorithm, opt_name: str, opt_value: Any) \
 
 def set_algo_options(algo: desbordante.Algorithm, args: dict[str, Any]) -> set:
     used_options = set()
-    while opts := algo.get_needed_options():
+    while opts := algo._get_needed_options():
         for option_name in opts:
             value = args[option_name]
             if is_omitted(value):
@@ -895,7 +895,7 @@ def get_provided_options(all_option_dict: dict[str, Any]) -> dict[str, Any]:
 
 def get_option_help_info(opt: str, algo: desbordante.Algorithm) -> str:
     help_info = ''
-    opt_main_type, *opt_additional_types = algo.get_option_type(opt)
+    opt_main_type, *opt_additional_types = algo._get_option_type(opt)
     opt_help_type = opt_additional_types[0] if opt_main_type == list \
         else opt_main_type
     help_info = (f'{help_info}\n'
@@ -912,12 +912,12 @@ def get_option_type_info() -> dict[str, Any]:
     for algo_name, algo_type in ALGOS.items():
         algo = algo_type()
         for opt in algo.get_possible_options():
-            option_type = algo.get_option_type(opt)
+            option_type = algo._get_option_type(opt)
             previous_type = option_type_info.setdefault(opt, option_type)
             assert option_type == previous_type, \
                 (f"Different types for '{opt}' option"
                  f'({previous_type=}, {option_type=}).')
-            option_type_info[opt] = algo.get_option_type(opt)
+            option_type_info[opt] = algo._get_option_type(opt)
     return option_type_info
 
 
